@@ -48,6 +48,16 @@
     signatureInput: document.getElementById("signature-input"),
     headlineInput: document.getElementById("headline-input"),
     messageBackground: document.getElementById("message-background"),
+    selectMessageBox: document.getElementById("select-message-box"),
+    messageShape: document.getElementById("message-shape"),
+    messageWidth: document.getElementById("message-width"),
+    messageWidthOutput: document.getElementById("message-width-output"),
+    messageHeight: document.getElementById("message-height"),
+    messageHeightOutput: document.getElementById("message-height-output"),
+    messageColor: document.getElementById("message-color"),
+    messageColorOutput: document.getElementById("message-color-output"),
+    messageOpacity: document.getElementById("message-opacity"),
+    messageOpacityOutput: document.getElementById("message-opacity-output"),
     textTabs: document.getElementById("text-tabs"),
     fontSelect: document.getElementById("font-select"),
     fontSizeInput: document.getElementById("font-size-input"),
@@ -65,9 +75,10 @@
     transforms: emptyTransforms(),
     texts: textFromTemplate(templates[0]),
     messageBackground: false,
+    messageBox: { ...templates[0].messageBox },
     activeText: "body",
     activeSlot: 0,
-    selected: { type: "text", key: "body" },
+    selected: { type: "messageBox" },
     textBounds: {},
     drag: null,
     exporting: false,
@@ -408,7 +419,7 @@
     ctx.restore();
   }
 
-  function renderCard(canvas, template, images, transforms, texts, messageBackground, guides, selected) {
+  function renderCard(canvas, template, images, transforms, texts, messageBackground, messageBox, guides, selected) {
     if (canvas.width !== template.width) canvas.width = template.width;
     if (canvas.height !== template.height) canvas.height = template.height;
     const ctx = canvas.getContext("2d");
@@ -421,24 +432,37 @@
     drawTemplateOverlay(ctx, template);
     const layouts = {};
     const textBounds = {};
-    TEXT_ORDER.forEach((key) => {
+    ["headline", "recipient", "signature"].forEach((key) => {
       const layout = layoutText(ctx, key, texts[key], template.text[key]);
       if (layout) {
         layouts[key] = layout;
         textBounds[key] = layout.bounds;
       }
     });
-    const visibleBounds = Object.values(textBounds);
-    if (messageBackground && visibleBounds.length) {
-      const minX = Math.max(20, Math.min(...visibleBounds.map((bounds) => bounds.x)) - 28);
-      const minY = Math.max(20, Math.min(...visibleBounds.map((bounds) => bounds.y)) - 22);
-      const maxX = Math.min(template.width - 20, Math.max(...visibleBounds.map((bounds) => bounds.x + bounds.width)) + 28);
-      const maxY = Math.min(template.height - 20, Math.max(...visibleBounds.map((bounds) => bounds.y + bounds.height)) + 22);
-      addRoundedRect(ctx, minX, minY, maxX - minX, maxY - minY, 20);
-      ctx.fillStyle = ["luxury", "fullscreen", "collage", "none"].includes(template.kind)
-        ? "rgba(25,25,29,.52)"
-        : "rgba(82,82,86,.20)";
+    const bodyMaxWidth = Math.max(40, messageBox.width - messageBox.padding * 2);
+    const bodyX = texts.body.align === "center"
+      ? messageBox.x + messageBox.width / 2
+      : texts.body.align === "right"
+        ? messageBox.x + messageBox.width - messageBox.padding
+        : messageBox.x + messageBox.padding;
+    const bodyState = { ...texts.body, x: bodyX, y: messageBox.y + messageBox.padding };
+    const bodyLayout = layoutText(ctx, "body", bodyState, { ...template.text.body, maxWidth: bodyMaxWidth });
+    if (bodyLayout) {
+      layouts.body = bodyLayout;
+      textBounds.body = bodyLayout.bounds;
+    }
+    if (messageBackground) {
+      ctx.save();
+      ctx.globalAlpha = messageBox.opacity;
+      ctx.fillStyle = messageBox.color;
+      if (messageBox.shape === "rounded") {
+        addRoundedRect(ctx, messageBox.x, messageBox.y, messageBox.width, messageBox.height, Math.min(28, messageBox.height * 0.12));
+      } else {
+        ctx.beginPath();
+        ctx.rect(messageBox.x, messageBox.y, messageBox.width, messageBox.height);
+      }
       ctx.fill();
+      ctx.restore();
     }
     TEXT_ORDER.forEach((key) => {
       const layout = layouts[key];
@@ -453,9 +477,23 @@
         ? "rgba(0,0,0,.42)"
         : "rgba(255,255,255,.24)";
       ctx.shadowBlur = template.kind === "fullscreen" || template.kind === "none" ? 8 : 2;
-      layout.lines.forEach((line, lineIndex) => {
-        ctx.fillText(line, textState.x, textState.y + lineIndex * layout.lineHeight, template.text[key].maxWidth);
-      });
+      if (key === "body") {
+        ctx.beginPath();
+        ctx.rect(
+          messageBox.x + messageBox.padding,
+          messageBox.y + messageBox.padding,
+          bodyMaxWidth,
+          Math.max(1, messageBox.height - messageBox.padding * 2),
+        );
+        ctx.clip();
+        layout.lines.forEach((line, lineIndex) => {
+          ctx.fillText(line, bodyState.x, bodyState.y + lineIndex * layout.lineHeight, bodyMaxWidth);
+        });
+      } else {
+        layout.lines.forEach((line, lineIndex) => {
+          ctx.fillText(line, textState.x, textState.y + lineIndex * layout.lineHeight, template.text[key].maxWidth);
+        });
+      }
       ctx.restore();
     });
     if (guides && selected) {
@@ -464,7 +502,17 @@
       ctx.fillStyle = "#ec6e88";
       ctx.lineWidth = Math.max(2, template.width / 600);
       ctx.setLineDash([10, 8]);
-      if (selected.type === "text") {
+      if (selected.type === "messageBox") {
+        ctx.strokeRect(messageBox.x, messageBox.y, messageBox.width, messageBox.height);
+        ctx.setLineDash([]);
+        const handleSize = Math.max(16, template.width / 80);
+        ctx.fillRect(
+          messageBox.x + messageBox.width - handleSize / 2,
+          messageBox.y + messageBox.height - handleSize / 2,
+          handleSize,
+          handleSize,
+        );
+      } else if (selected.type === "text") {
         const bounds = textBounds[selected.key];
         if (bounds) {
           ctx.strokeRect(bounds.x - 6, bounds.y - 6, bounds.width + 12, bounds.height + 12);
@@ -490,6 +538,7 @@
       state.transforms,
       state.texts,
       state.messageBackground,
+      state.messageBox,
       true,
       state.selected,
     );
@@ -553,9 +602,10 @@
     if (!nextTemplate) return;
     state.templateId = id;
     state.texts = textFromTemplate(nextTemplate, state.texts);
+    state.messageBox = { ...nextTemplate.messageBox };
     state.transforms = emptyTransforms();
     state.activeSlot = 0;
-    state.selected = { type: "text", key: state.activeText };
+    state.selected = state.activeText === "body" ? { type: "messageBox" } : { type: "text", key: state.activeText };
     syncInterface();
     redraw();
   }
@@ -563,7 +613,7 @@
   function selectText(key) {
     if (!TEXT_LABELS[key]) return;
     state.activeText = key;
-    state.selected = { type: "text", key };
+    state.selected = key === "body" ? { type: "messageBox" } : { type: "text", key };
     syncTextControls();
     redraw();
   }
@@ -630,6 +680,20 @@
     elements.signatureInput.value = state.texts.signature.value;
     elements.headlineInput.value = state.texts.headline.value;
     elements.messageBackground.checked = state.messageBackground;
+    const template = currentTemplate();
+    elements.messageShape.value = state.messageBox.shape;
+    elements.messageWidth.min = "220";
+    elements.messageWidth.max = String(Math.max(220, template.width - state.messageBox.x));
+    elements.messageWidth.value = String(Math.round(state.messageBox.width));
+    elements.messageWidthOutput.textContent = `${Math.round(state.messageBox.width)}px`;
+    elements.messageHeight.min = "120";
+    elements.messageHeight.max = String(Math.max(120, template.height - state.messageBox.y));
+    elements.messageHeight.value = String(Math.round(state.messageBox.height));
+    elements.messageHeightOutput.textContent = `${Math.round(state.messageBox.height)}px`;
+    elements.messageColor.value = state.messageBox.color;
+    elements.messageColorOutput.textContent = state.messageBox.color.toUpperCase();
+    elements.messageOpacity.value = String(Math.round(state.messageBox.opacity * 100));
+    elements.messageOpacityOutput.textContent = `${Math.round(state.messageBox.opacity * 100)}%`;
   }
 
   function syncTextControls() {
@@ -674,6 +738,12 @@
     redraw();
   }
 
+  function updateMessageBox(patch) {
+    state.messageBox = { ...state.messageBox, ...patch };
+    syncMessageControls();
+    redraw();
+  }
+
   function loadImage(file) {
     if (!file) return;
     const index = state.activeSlot;
@@ -702,7 +772,25 @@
   function pointerDown(event) {
     const template = currentTemplate();
     const point = canvasPoint(event);
-    const hitText = [...TEXT_ORDER].reverse().find((key) => {
+    const handleSize = Math.max(20, template.width / 55);
+    const handleBounds = {
+      x: state.messageBox.x + state.messageBox.width - handleSize,
+      y: state.messageBox.y + state.messageBox.height - handleSize,
+      width: handleSize * 1.5,
+      height: handleSize * 1.5,
+    };
+    if (state.selected && state.selected.type === "messageBox" && pointInBounds(point.x, point.y, handleBounds)) {
+      state.drag = {
+        type: "messageResize",
+        startX: point.x,
+        startY: point.y,
+        width: state.messageBox.width,
+        height: state.messageBox.height,
+      };
+      elements.canvas.setPointerCapture(event.pointerId);
+      return;
+    }
+    const hitText = ["signature", "recipient", "headline"].find((key) => {
       const bounds = state.textBounds[key];
       return bounds && pointInBounds(point.x, point.y, bounds);
     });
@@ -715,6 +803,22 @@
         startY: point.y,
         x: state.texts[hitText].x,
         y: state.texts[hitText].y,
+      };
+      elements.canvas.setPointerCapture(event.pointerId);
+      return;
+    }
+    const bodyBounds = state.textBounds.body;
+    const hitsMessageBox = (state.messageBackground || (state.selected && state.selected.type === "messageBox"))
+      ? pointInBounds(point.x, point.y, state.messageBox)
+      : Boolean(bodyBounds && pointInBounds(point.x, point.y, bodyBounds));
+    if (hitsMessageBox) {
+      selectText("body");
+      state.drag = {
+        type: "messageBox",
+        startX: point.x,
+        startY: point.y,
+        x: state.messageBox.x,
+        y: state.messageBox.y,
       };
       elements.canvas.setPointerCapture(event.pointerId);
       return;
@@ -748,9 +852,17 @@
     if (state.drag.type === "text") {
       state.texts[state.drag.key].x = state.drag.x + deltaX;
       state.texts[state.drag.key].y = state.drag.y + deltaY;
-    } else {
+    } else if (state.drag.type === "image") {
       state.transforms[state.drag.index].offsetX = state.drag.x + deltaX;
       state.transforms[state.drag.index].offsetY = state.drag.y + deltaY;
+    } else if (state.drag.type === "messageBox") {
+      state.messageBox.x = Math.max(0, Math.min(template.width - state.messageBox.width, state.drag.x + deltaX));
+      state.messageBox.y = Math.max(0, Math.min(template.height - state.messageBox.height, state.drag.y + deltaY));
+      syncMessageControls();
+    } else {
+      state.messageBox.width = Math.max(220, Math.min(template.width - state.messageBox.x, state.drag.width + deltaX));
+      state.messageBox.height = Math.max(120, Math.min(template.height - state.messageBox.y, state.drag.height + deltaY));
+      syncMessageControls();
     }
     redraw();
   }
@@ -800,6 +912,7 @@
         state.transforms,
         state.texts,
         state.messageBackground,
+        state.messageBox,
         false,
         null,
       );
@@ -850,7 +963,24 @@
     });
     elements.messageBackground.addEventListener("change", (event) => {
       state.messageBackground = event.target.checked;
+      selectText("body");
       redraw();
+    });
+    elements.selectMessageBox.addEventListener("click", () => selectText("body"));
+    elements.messageShape.addEventListener("change", (event) => {
+      updateMessageBox({ shape: event.target.value });
+    });
+    elements.messageWidth.addEventListener("input", (event) => {
+      updateMessageBox({ width: Number(event.target.value) });
+    });
+    elements.messageHeight.addEventListener("input", (event) => {
+      updateMessageBox({ height: Number(event.target.value) });
+    });
+    elements.messageColor.addEventListener("input", (event) => {
+      updateMessageBox({ color: event.target.value });
+    });
+    elements.messageOpacity.addEventListener("input", (event) => {
+      updateMessageBox({ opacity: Number(event.target.value) / 100 });
     });
     elements.textTabs.addEventListener("click", (event) => {
       const button = event.target.closest("[data-text-key]");

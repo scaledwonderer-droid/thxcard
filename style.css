@@ -354,6 +354,17 @@ input[type="range"]::-webkit-slider-thumb { width: 13px; height: 13px; appearanc
 .toggle-row > i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: #aaa1ab; transition: transform .18s, background .18s; }
 .toggle-row input:checked + i { background: rgba(232,111,136,.5); }
 .toggle-row input:checked + i::after { transform: translateX(16px); background: #fff; }
+.message-box-controls {
+  margin-top: -2px;
+  padding: 12px;
+  border: 1px solid rgba(232,111,136,.15);
+  border-radius: 11px;
+  background: rgba(232,111,136,.035);
+}
+.message-box-controls > p { margin: 7px 1px 12px; color: #7f7682; font-size: 8px; line-height: 1.55; }
+.message-box-controls .select-message-button { margin-top: 0; color: #cfc5d0; border-color: rgba(232,111,136,.22); }
+.message-box-controls .field-label { margin-top: 0; }
+.message-box-controls .range-control, .message-box-controls .color-control { margin-top: 12px; }
 
 .text-tabs { padding-top: 13px; margin-bottom: 13px; }
 .text-tabs button { white-space: nowrap; }

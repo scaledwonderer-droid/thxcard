@@ -36,11 +36,11 @@
               id="card-canvas"
               width="1200"
               height="1500"
-              aria-label="完成画像プレビュー。SSと文字をドラッグして移動できます"
+              aria-label="完成画像プレビュー。SS、文字、メッセージボックスをドラッグして移動できます"
             ></canvas>
           </div>
           <div class="gesture-hint">
-            <span><i class="drag-icon"></i>SS・文字をドラッグで移動</span>
+            <span><i class="drag-icon"></i>SS・文字・本文ボックスをドラッグ</span>
             <span><i class="wheel-icon"></i>SS上のホイールで拡大縮小</span>
           </div>
         </section>
@@ -89,7 +89,7 @@
                 <input id="recipient-input" type="text" placeholder="にゃーちゃん" autocomplete="off">
               </label>
               <label>
-                <span>本文</span>
+                <span>本文 <small>メッセージボックス内で自動折り返し</small></span>
                 <textarea id="body-input" rows="5"></textarea>
               </label>
               <label>
@@ -103,11 +103,39 @@
               <label class="toggle-row">
                 <span>
                   <strong>メッセージ背景</strong>
-                  <small>文字の背後に半透明グレーを表示</small>
+                  <small>本文ボックスの背景だけを表示／非表示</small>
                 </span>
                 <input id="message-background" type="checkbox">
                 <i aria-hidden="true"></i>
               </label>
+              <div class="message-box-controls">
+                <button class="subtle-button select-message-button" id="select-message-box" type="button">本文ボックスを選択</button>
+                <p>ドラッグで移動／右下の四角ハンドルでサイズ変更</p>
+                <label class="field-label">
+                  <span>形状</span>
+                  <select id="message-shape"><option value="rectangle">長方形</option><option value="rounded">角丸長方形</option></select>
+                </label>
+                <label class="range-control">
+                  <span>横幅</span>
+                  <strong id="message-width-output">920px</strong>
+                  <input id="message-width" type="range" min="220" max="1200" step="1" value="920">
+                </label>
+                <label class="range-control">
+                  <span>高さ</span>
+                  <strong id="message-height-output">220px</strong>
+                  <input id="message-height" type="range" min="120" max="1500" step="1" value="220">
+                </label>
+                <label class="color-control">
+                  <span>背景色</span>
+                  <input id="message-color" type="color" value="#555257">
+                  <output id="message-color-output">#555257</output>
+                </label>
+                <label class="range-control">
+                  <span>透明度</span>
+                  <strong id="message-opacity-output">22%</strong>
+                  <input id="message-opacity" type="range" min="5" max="90" step="1" value="22">
+                </label>
+              </div>
             </div>
           </details>
 
