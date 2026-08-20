@@ -7,9 +7,9 @@
     <meta name="color-scheme" content="dark">
     <title>お礼SSカードジェネレーター</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./style.css">
-    <script src="./templates/templates.js" defer></script>
-    <script src="./app.js" defer></script>
+    <link rel="stylesheet" href="./style.css?v=20260820-2">
+    <script src="./templates/templates.js?v=20260820-2" defer></script>
+    <script src="./app.js?v=20260820-2" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -110,10 +110,20 @@
               </label>
               <div class="message-box-controls">
                 <button class="subtle-button select-message-button" id="select-message-box" type="button">本文ボックスを選択</button>
-                <p>ドラッグで移動／右下の四角ハンドルでサイズ変更</p>
+                <p>選択後、枠内のどこをドラッグしても移動できます。背景OFFでも有効です。</p>
                 <label class="field-label">
                   <span>形状</span>
                   <select id="message-shape"><option value="rectangle">長方形</option><option value="rounded">角丸長方形</option></select>
+                </label>
+                <label class="range-control">
+                  <span>横位置</span>
+                  <strong id="message-x-output">140px</strong>
+                  <input id="message-x" type="range" min="0" max="280" step="1" value="140">
+                </label>
+                <label class="range-control">
+                  <span>縦位置</span>
+                  <strong id="message-y-output">1115px</strong>
+                  <input id="message-y" type="range" min="0" max="1280" step="1" value="1115">
                 </label>
                 <label class="range-control">
                   <span>横幅</span>

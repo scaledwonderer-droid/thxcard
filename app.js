@@ -50,6 +50,10 @@
     messageBackground: document.getElementById("message-background"),
     selectMessageBox: document.getElementById("select-message-box"),
     messageShape: document.getElementById("message-shape"),
+    messageX: document.getElementById("message-x"),
+    messageXOutput: document.getElementById("message-x-output"),
+    messageY: document.getElementById("message-y"),
+    messageYOutput: document.getElementById("message-y-output"),
     messageWidth: document.getElementById("message-width"),
     messageWidthOutput: document.getElementById("message-width-output"),
     messageHeight: document.getElementById("message-height"),
@@ -512,6 +516,17 @@
           handleSize,
           handleSize,
         );
+        const tagHeight = Math.max(28, template.width / 55);
+        const tagWidth = Math.min(messageBox.width - 24, tagHeight * 6.6);
+        if (tagWidth > 90) {
+          addRoundedRect(ctx, messageBox.x + 12, messageBox.y + 12, tagWidth, tagHeight, tagHeight / 2);
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.font = `${Math.max(14, tagHeight * 0.46)}px "Zen Maru Gothic", sans-serif`;
+          ctx.textAlign = "left";
+          ctx.textBaseline = "middle";
+          ctx.fillText("ドラッグで移動", messageBox.x + 12 + tagHeight * 0.65, messageBox.y + 12 + tagHeight / 2);
+        }
       } else if (selected.type === "text") {
         const bounds = textBounds[selected.key];
         if (bounds) {
@@ -682,6 +697,14 @@
     elements.messageBackground.checked = state.messageBackground;
     const template = currentTemplate();
     elements.messageShape.value = state.messageBox.shape;
+    elements.messageX.min = "0";
+    elements.messageX.max = String(Math.max(0, template.width - state.messageBox.width));
+    elements.messageX.value = String(Math.round(state.messageBox.x));
+    elements.messageXOutput.textContent = `${Math.round(state.messageBox.x)}px`;
+    elements.messageY.min = "0";
+    elements.messageY.max = String(Math.max(0, template.height - state.messageBox.height));
+    elements.messageY.value = String(Math.round(state.messageBox.y));
+    elements.messageYOutput.textContent = `${Math.round(state.messageBox.y)}px`;
     elements.messageWidth.min = "220";
     elements.messageWidth.max = String(Math.max(220, template.width - state.messageBox.x));
     elements.messageWidth.value = String(Math.round(state.messageBox.width));
@@ -770,6 +793,7 @@
   }
 
   function pointerDown(event) {
+    event.preventDefault();
     const template = currentTemplate();
     const point = canvasPoint(event);
     const handleSize = Math.max(20, template.width / 55);
@@ -807,11 +831,7 @@
       elements.canvas.setPointerCapture(event.pointerId);
       return;
     }
-    const bodyBounds = state.textBounds.body;
-    const hitsMessageBox = (state.messageBackground || (state.selected && state.selected.type === "messageBox"))
-      ? pointInBounds(point.x, point.y, state.messageBox)
-      : Boolean(bodyBounds && pointInBounds(point.x, point.y, bodyBounds));
-    if (hitsMessageBox) {
+    if (pointInBounds(point.x, point.y, state.messageBox)) {
       selectText("body");
       state.drag = {
         type: "messageBox",
@@ -845,6 +865,7 @@
   }
 
   function pointerMove(event) {
+    event.preventDefault();
     if (!state.drag) return;
     const point = canvasPoint(event);
     const deltaX = point.x - state.drag.startX;
@@ -970,6 +991,12 @@
     elements.messageShape.addEventListener("change", (event) => {
       updateMessageBox({ shape: event.target.value });
     });
+    elements.messageX.addEventListener("input", (event) => {
+      updateMessageBox({ x: Number(event.target.value) });
+    });
+    elements.messageY.addEventListener("input", (event) => {
+      updateMessageBox({ y: Number(event.target.value) });
+    });
     elements.messageWidth.addEventListener("input", (event) => {
       updateMessageBox({ width: Number(event.target.value) });
     });
@@ -1003,6 +1030,7 @@
     elements.canvas.addEventListener("pointermove", pointerMove);
     elements.canvas.addEventListener("pointerup", stopDrag);
     elements.canvas.addEventListener("pointercancel", stopDrag);
+    elements.canvas.addEventListener("lostpointercapture", () => { state.drag = null; });
     elements.canvas.addEventListener("wheel", canvasWheel, { passive: false });
     elements.exportButton.addEventListener("click", exportPng);
     window.addEventListener("beforeunload", () => {
