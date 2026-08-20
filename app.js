@@ -3,7 +3,8 @@
 
   const templates = window.CARD_TEMPLATES;
   const fonts = window.CARD_FONTS;
-  if (!Array.isArray(templates) || !Array.isArray(fonts)) {
+  const frames = window.CARD_FRAMES;
+  if (!Array.isArray(templates) || !Array.isArray(fonts) || !Array.isArray(frames)) {
     throw new Error("テンプレート設定を読み込めませんでした。");
   }
 
@@ -43,6 +44,11 @@
     rotationInput: document.getElementById("rotation-input"),
     rotationOutput: document.getElementById("rotation-output"),
     imageReset: document.getElementById("image-reset"),
+    frameControls: document.getElementById("frame-controls"),
+    frameEnabled: document.getElementById("frame-enabled"),
+    framePicker: document.getElementById("frame-picker"),
+    frameName: document.getElementById("frame-name"),
+    frameGrid: document.getElementById("frame-grid"),
     recipientInput: document.getElementById("recipient-input"),
     bodyInput: document.getElementById("body-input"),
     signatureInput: document.getElementById("signature-input"),
@@ -78,6 +84,9 @@
     images: [null, null, null],
     transforms: emptyTransforms(),
     texts: textFromTemplate(templates[0]),
+    frameEnabled: false,
+    selectedFrameId: frames[0].id,
+    frameImage: null,
     messageBackground: false,
     messageBox: { ...templates[0].messageBox },
     activeText: "body",
@@ -87,6 +96,8 @@
     drag: null,
     exporting: false,
   };
+  const frameCache = new Map();
+  const frameLoadPromises = new Map();
 
   function currentTemplate() {
     return templates.find((item) => item.id === state.templateId) || templates[0];
@@ -423,7 +434,7 @@
     ctx.restore();
   }
 
-  function renderCard(canvas, template, images, transforms, texts, messageBackground, messageBox, guides, selected) {
+  function renderCard(canvas, template, images, transforms, texts, frameEnabled, frameImage, messageBackground, messageBox, guides, selected) {
     if (canvas.width !== template.width) canvas.width = template.width;
     if (canvas.height !== template.height) canvas.height = template.height;
     const ctx = canvas.getContext("2d");
@@ -434,6 +445,9 @@
     drawTemplateBase(ctx, template);
     template.slots.forEach((slot, index) => drawImageSlot(ctx, template, slot, images[index], transforms[index]));
     drawTemplateOverlay(ctx, template);
+    if (template.kind === "fullscreen" && frameEnabled && frameImage && frameImage.complete && frameImage.naturalWidth > 0) {
+      ctx.drawImage(frameImage, 0, 0, template.width, template.height);
+    }
     const layouts = {};
     const textBounds = {};
     ["headline", "recipient", "signature"].forEach((key) => {
@@ -552,6 +566,8 @@
       state.images,
       state.transforms,
       state.texts,
+      state.frameEnabled,
+      state.frameImage,
       state.messageBackground,
       state.messageBox,
       true,
@@ -609,6 +625,62 @@
       option.textContent = font;
       option.style.fontFamily = font;
       elements.fontSelect.append(option);
+    });
+  }
+
+  function loadFrameImage(frameId) {
+    const option = frames.find((item) => item.id === frameId);
+    if (!option) return Promise.resolve(null);
+    if (frameCache.has(frameId)) return Promise.resolve(frameCache.get(frameId));
+    if (frameLoadPromises.has(frameId)) return frameLoadPromises.get(frameId);
+    const promise = new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => {
+        frameCache.set(frameId, image);
+        frameLoadPromises.delete(frameId);
+        resolve(image);
+      };
+      image.onerror = () => {
+        frameLoadPromises.delete(frameId);
+        resolve(null);
+      };
+      image.src = option.src;
+    });
+    frameLoadPromises.set(frameId, promise);
+    return promise;
+  }
+
+  function selectFrame(frameId) {
+    if (!frames.some((item) => item.id === frameId)) return;
+    state.selectedFrameId = frameId;
+    state.frameImage = frameCache.get(frameId) || null;
+    syncFrameControls();
+    redraw();
+    loadFrameImage(frameId).then((image) => {
+      if (state.selectedFrameId !== frameId) return;
+      state.frameImage = image;
+      redraw();
+    });
+  }
+
+  function createFrameCards() {
+    elements.frameGrid.textContent = "";
+    frames.forEach((frame) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "frame-card";
+      button.dataset.frameId = frame.id;
+      button.setAttribute("role", "option");
+      button.setAttribute("aria-selected", "false");
+      const image = document.createElement("img");
+      image.src = frame.src;
+      image.alt = "";
+      image.loading = "lazy";
+      const label = document.createElement("span");
+      label.textContent = frame.name;
+      button.append(image, label);
+      button.addEventListener("click", () => selectFrame(frame.id));
+      elements.frameGrid.append(button);
     });
   }
 
@@ -689,6 +761,20 @@
     });
   }
 
+  function syncFrameControls() {
+    const fullscreen = currentTemplate().kind === "fullscreen";
+    elements.frameControls.hidden = !fullscreen;
+    elements.frameEnabled.checked = state.frameEnabled;
+    elements.framePicker.hidden = !state.frameEnabled;
+    const selected = frames.find((item) => item.id === state.selectedFrameId) || frames[0];
+    elements.frameName.textContent = selected.name;
+    elements.frameGrid.querySelectorAll("[data-frame-id]").forEach((button) => {
+      const active = button.dataset.frameId === state.selectedFrameId;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+  }
+
   function syncMessageControls() {
     elements.recipientInput.value = state.texts.recipient.value;
     elements.bodyInput.value = state.texts.body.value;
@@ -745,6 +831,7 @@
     syncTemplateCards();
     syncSlotTabs();
     syncSlotControls();
+    syncFrameControls();
     syncMessageControls();
     syncTextControls();
   }
@@ -867,6 +954,7 @@
   function pointerMove(event) {
     event.preventDefault();
     if (!state.drag) return;
+    const template = currentTemplate();
     const point = canvasPoint(event);
     const deltaX = point.x - state.drag.startX;
     const deltaY = point.y - state.drag.startY;
@@ -923,6 +1011,7 @@
     try {
       if (document.fonts) await document.fonts.ready;
       const template = currentTemplate();
+      const exportFrame = state.frameEnabled ? await loadFrameImage(state.selectedFrameId) : null;
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = template.width;
       exportCanvas.height = template.height;
@@ -932,6 +1021,8 @@
         state.images,
         state.transforms,
         state.texts,
+        state.frameEnabled,
+        exportFrame,
         state.messageBackground,
         state.messageBox,
         false,
@@ -967,6 +1058,18 @@
     });
     elements.imageReset.addEventListener("click", () => {
       updateTransform(state.activeSlot, { ...EMPTY_TRANSFORM });
+    });
+    elements.frameEnabled.addEventListener("change", (event) => {
+      state.frameEnabled = event.target.checked;
+      syncFrameControls();
+      redraw();
+      if (state.frameEnabled) {
+        loadFrameImage(state.selectedFrameId).then((image) => {
+          if (!state.frameEnabled) return;
+          state.frameImage = image;
+          redraw();
+        });
+      }
     });
 
     const messageInputs = {
@@ -1043,6 +1146,7 @@
   function initialize() {
     createTemplateCards();
     createFontOptions();
+    createFrameCards();
     bindEvents();
     syncInterface();
     redraw();

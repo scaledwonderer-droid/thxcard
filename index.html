@@ -7,9 +7,9 @@
     <meta name="color-scheme" content="dark">
     <title>お礼SSカードジェネレーター</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./style.css?v=20260820-2">
-    <script src="./templates/templates.js?v=20260820-2" defer></script>
-    <script src="./app.js?v=20260820-2" defer></script>
+    <link rel="stylesheet" href="./style.css?v=20260820-3">
+    <script src="./templates/templates.js?v=20260820-3" defer></script>
+    <script src="./app.js?v=20260820-3" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -78,6 +78,17 @@
                 <input id="rotation-input" type="range" min="-15" max="15" step="1" value="0">
               </label>
               <button class="subtle-button" id="image-reset" type="button">SSの位置・倍率・回転をリセット</button>
+              <div class="frame-controls" id="frame-controls" hidden>
+                <label class="toggle-row frame-toggle">
+                  <span><strong>フレームを使用する</strong><small>SSの上・文字の下に重ねます</small></span>
+                  <input id="frame-enabled" type="checkbox">
+                  <i aria-hidden="true"></i>
+                </label>
+                <div class="frame-picker" id="frame-picker" hidden>
+                  <div class="frame-picker-heading"><span>フレーム選択</span><strong id="frame-name">シャンパンゴールド</strong></div>
+                  <div class="frame-grid" id="frame-grid" role="listbox" aria-label="使用するフレーム"></div>
+                </div>
+              </div>
             </div>
           </details>
 

@@ -328,6 +328,20 @@ input[type="range"]::-webkit-slider-thumb { width: 13px; height: 13px; appearanc
 .subtle-button { width: 100%; min-height: 35px; margin-top: 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; color: #9e959f; background: transparent; font-size: 9px; cursor: pointer; }
 .subtle-button:hover { color: #ddd5df; border-color: rgba(255,255,255,.18); }
 
+.frame-controls { margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.06); }
+.frame-toggle { min-height: 42px; margin: 0; padding: 0 4px; border-top: 0; }
+.frame-picker { margin-top: 9px; }
+.frame-picker-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.frame-picker-heading span { color: #918892; font-size: 9px; }
+.frame-picker-heading strong { max-width: 68%; overflow: hidden; color: #d4ccd6; font-size: 9px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.frame-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-height: 304px; padding: 4px; overflow-y: auto; scrollbar-color: #665c67 transparent; }
+.frame-card { min-width: 0; padding: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; color: #908792; background: rgba(255,255,255,.018); cursor: pointer; transition: border-color .16s, background .16s, box-shadow .16s; }
+.frame-card:hover { border-color: rgba(232,111,136,.36); background: rgba(255,255,255,.035); }
+.frame-card.active { border-color: rgba(232,111,136,.75); background: rgba(232,111,136,.09); box-shadow: 0 0 0 1px rgba(232,111,136,.2); }
+.frame-card img { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 4px; object-fit: contain; background-color: #151217; background-image: linear-gradient(45deg, rgba(255,255,255,.045) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,.045) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,.045) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.045) 75%); background-position: 0 0, 0 5px, 5px -5px, -5px 0; background-size: 10px 10px; }
+.frame-card span { display: block; margin-top: 5px; overflow: hidden; font-size: 8px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.frame-card.active span { color: #f1dfe4; }
+
 .message-fields { padding-top: 13px; display: flex; flex-direction: column; gap: 11px; }
 .message-fields > label:not(.toggle-row), .field-label { display: flex; flex-direction: column; gap: 6px; }
 .message-fields label > span, .field-label > span { display: flex; align-items: baseline; gap: 7px; color: #c5bdc7; font-size: 10px; }
