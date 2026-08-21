@@ -48,6 +48,7 @@
     frameEnabled: document.getElementById("frame-enabled"),
     framePicker: document.getElementById("frame-picker"),
     frameName: document.getElementById("frame-name"),
+    frameCategoryTabs: document.getElementById("frame-category-tabs"),
     frameGrid: document.getElementById("frame-grid"),
     recipientInput: document.getElementById("recipient-input"),
     bodyInput: document.getElementById("body-input"),
@@ -85,6 +86,7 @@
     transforms: emptyTransforms(),
     texts: textFromTemplate(templates[0]),
     frameEnabled: false,
+    frameCategory: "host",
     selectedFrameId: frames[0].id,
     frameImage: null,
     messageBackground: false,
@@ -650,6 +652,12 @@
     return promise;
   }
 
+  function frameCategoryOf(frame) {
+    if (frame.id.startsWith("cabaret-full-")) return "cabaret-full";
+    if (frame.id.startsWith("cabaret-light-")) return "cabaret-light";
+    return "host";
+  }
+
   function selectFrame(frameId) {
     if (!frames.some((item) => item.id === frameId)) return;
     state.selectedFrameId = frameId;
@@ -670,6 +678,7 @@
       button.type = "button";
       button.className = "frame-card";
       button.dataset.frameId = frame.id;
+      button.dataset.frameCategory = frameCategoryOf(frame);
       button.setAttribute("role", "option");
       button.setAttribute("aria-selected", "false");
       const image = document.createElement("img");
@@ -768,8 +777,14 @@
     elements.framePicker.hidden = !state.frameEnabled;
     const selected = frames.find((item) => item.id === state.selectedFrameId) || frames[0];
     elements.frameName.textContent = selected.name;
+    elements.frameCategoryTabs.querySelectorAll("[data-frame-category]").forEach((button) => {
+      const active = button.dataset.frameCategory === state.frameCategory;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
     elements.frameGrid.querySelectorAll("[data-frame-id]").forEach((button) => {
       const active = button.dataset.frameId === state.selectedFrameId;
+      button.hidden = button.dataset.frameCategory !== state.frameCategory;
       button.classList.toggle("active", active);
       button.setAttribute("aria-selected", String(active));
     });
@@ -1070,6 +1085,13 @@
           redraw();
         });
       }
+    });
+    elements.frameCategoryTabs.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-frame-category]");
+      if (!button) return;
+      state.frameCategory = button.dataset.frameCategory;
+      elements.frameGrid.scrollTop = 0;
+      syncFrameControls();
     });
 
     const messageInputs = {

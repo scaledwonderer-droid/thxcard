@@ -7,9 +7,9 @@
     <meta name="color-scheme" content="dark">
     <title>お礼SSカードジェネレーター</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./style.css?v=20260820-3">
-    <script src="./templates/templates.js?v=20260820-3" defer></script>
-    <script src="./app.js?v=20260820-3" defer></script>
+    <link rel="stylesheet" href="./style.css?v=20260821-2">
+    <script src="./templates/templates.js?v=20260821-2" defer></script>
+    <script src="./app.js?v=20260821-2" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -86,6 +86,11 @@
                 </label>
                 <div class="frame-picker" id="frame-picker" hidden>
                   <div class="frame-picker-heading"><span>フレーム選択</span><strong id="frame-name">シャンパンゴールド</strong></div>
+                  <div class="frame-category-tabs" id="frame-category-tabs" role="tablist" aria-label="フレームの種類">
+                    <button type="button" role="tab" class="active" data-frame-category="host" aria-selected="true"><span>ホスト系</span><small>40</small></button>
+                    <button type="button" role="tab" data-frame-category="cabaret-full" aria-selected="false"><span>キャバクラ・フル</span><small>20</small></button>
+                    <button type="button" role="tab" data-frame-category="cabaret-light" aria-selected="false"><span>キャバクラ・ライト</span><small>20</small></button>
+                  </div>
                   <div class="frame-grid" id="frame-grid" role="listbox" aria-label="使用するフレーム"></div>
                 </div>
               </div>

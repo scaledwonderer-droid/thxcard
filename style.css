@@ -334,6 +334,13 @@ input[type="range"]::-webkit-slider-thumb { width: 13px; height: 13px; appearanc
 .frame-picker-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
 .frame-picker-heading span { color: #918892; font-size: 9px; }
 .frame-picker-heading strong { max-width: 68%; overflow: hidden; color: #d4ccd6; font-size: 9px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.frame-category-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin-bottom: 9px; }
+.frame-category-tabs button { min-width: 0; min-height: 40px; padding: 6px 4px; border: 1px solid rgba(255,255,255,.08); border-radius: 7px; color: #918892; background: rgba(255,255,255,.018); cursor: pointer; }
+.frame-category-tabs button span { display: block; overflow: hidden; font-size: 8px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.frame-category-tabs button small { display: block; margin-top: 2px; color: #6f6871; font-size: 7px; }
+.frame-category-tabs button:hover { border-color: rgba(232,111,136,.34); }
+.frame-category-tabs button.active { border-color: rgba(232,111,136,.72); color: #f1dfe4; background: rgba(232,111,136,.1); }
+.frame-category-tabs button.active small { color: #c995a1; }
 .frame-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-height: 304px; padding: 4px; overflow-y: auto; scrollbar-color: #665c67 transparent; }
 .frame-card { min-width: 0; padding: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; color: #908792; background: rgba(255,255,255,.018); cursor: pointer; transition: border-color .16s, background .16s, box-shadow .16s; }
 .frame-card:hover { border-color: rgba(232,111,136,.36); background: rgba(255,255,255,.035); }
